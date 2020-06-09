@@ -46,10 +46,14 @@ func (d *Differ) Poll() ([]Event, error) {
 	if d.err != nil {
 		return nil, d.err
 	}
+	println("fsdiff: creating new snapshot")
+
 	curr, err := NewSnapshot(d.root)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting file system snapshot")
 	}
+	println("fsdiff: created new snapshot")
+
 	events := append(d.events, Diff(d.latest, curr)...)
 
 	d.events = nil
