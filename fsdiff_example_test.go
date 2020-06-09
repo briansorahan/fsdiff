@@ -12,7 +12,10 @@ func ExampleDiffer() {
 	// Initialize the differ.
 	// This will read the current state of the file system
 	// at the specified root directory.
-	diff, err := fsdiff.New(fsdiff.Root("testdata"))
+	diff, err := fsdiff.New(
+		fsdiff.Root("testdata"),
+		fsdiff.Recursive(),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}

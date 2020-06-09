@@ -125,8 +125,24 @@ type Snapshot map[string]os.FileInfo
 func NewSnapshot(root string, recursive bool) (Snapshot, error) {
 	snap := Snapshot{}
 
-	if err := filepath.Walk(root, snap.Visit); err != nil {
-		return nil, errors.Wrap(err, "walking file system")
+	if recursive {
+		if err := filepath.Walk(root, snap.Visit); err != nil {
+			return nil, errors.Wrap(err, "walking file system")
+		}
+	} else {
+		f, err := os.Open(root)
+		if err != nil {
+			return nil, errors.Wrap(err, "opening root directory")
+		}
+		defer f.Close()
+
+		infos, err := f.Readdir(-1)
+		if err != nil {
+			return nil, errors.Wrap(err, "reading files in directory")
+		}
+		for _, info := range infos {
+			snap[info.Name()] = info
+		}
 	}
 	return snap, nil
 }

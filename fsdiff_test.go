@@ -9,7 +9,7 @@ import (
 
 func TestNew(t *testing.T) {
 	t.Run("missing Root option", func(t *testing.T) {
-		_, err := fsdiff.New()
+		_, err := fsdiff.New(fsdiff.Recursive())
 		if err == nil {
 			t.Fatal("expected an error")
 		}
@@ -18,7 +18,10 @@ func TestNew(t *testing.T) {
 		}
 	})
 	t.Run("Root directory does not exist", func(t *testing.T) {
-		_, err := fsdiff.New(fsdiff.Root("nonexistent"))
+		_, err := fsdiff.New(
+			fsdiff.Root("nonexistent"),
+			fsdiff.Recursive(),
+		)
 		if err == nil {
 			t.Fatal("expected an error")
 		}
@@ -29,7 +32,10 @@ func TestNew(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	differ, err := fsdiff.New(fsdiff.Root("testdata"))
+	differ, err := fsdiff.New(
+		fsdiff.Root("testdata"),
+		fsdiff.Recursive(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +81,10 @@ func TestDelete(t *testing.T) {
 	if _, err := f.Write([]byte("bar")); err != nil {
 		t.Fatal(err)
 	}
-	differ, err := fsdiff.New(fsdiff.Root("testdata"))
+	differ, err := fsdiff.New(
+		fsdiff.Root("testdata"),
+		fsdiff.Recursive(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +117,10 @@ func TestPollError(t *testing.T) {
 		t.Fatal(err)
 	}
 	// TODO
-	differ, err := fsdiff.New(fsdiff.Root("testdata/temp"))
+	differ, err := fsdiff.New(
+		fsdiff.Root("testdata/temp"),
+		fsdiff.Recursive(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +160,10 @@ func TestRename(t *testing.T) {
 	if _, err := f.Write([]byte("bar")); err != nil {
 		t.Fatal(err)
 	}
-	differ, err := fsdiff.New(fsdiff.Root("testdata"))
+	differ, err := fsdiff.New(
+		fsdiff.Root("testdata"),
+		fsdiff.Recursive(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,8 +230,10 @@ func TestUpdateError(t *testing.T) {
 	if err := os.Mkdir("testdata/temp", 0o755); err != nil {
 		t.Fatal(err)
 	}
-	// TODO
-	differ, err := fsdiff.New(fsdiff.Root("testdata/temp"))
+	differ, err := fsdiff.New(
+		fsdiff.Root("testdata/temp"),
+		fsdiff.Recursive(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
