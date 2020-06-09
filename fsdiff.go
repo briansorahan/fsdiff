@@ -11,10 +11,11 @@ import (
 
 // Differ diffs a file system at two points in time.
 type Differ struct {
-	err    error // Errors encountered during Update.
-	events []Event
-	latest Snapshot
-	root   string
+	err       error // Errors encountered during Update.
+	events    []Event
+	latest    Snapshot
+	recursive bool
+	root      string
 }
 
 // New creates a new Differ.
@@ -27,7 +28,7 @@ func New(options ...Option) (*Differ, error) {
 	if len(d.root) == 0 {
 		return nil, errors.New("Root option is required")
 	}
-	snap, err := NewSnapshot(d.root)
+	snap, err := NewSnapshot(d.root, d.recursive)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting initial file system snapshot")
 	}
@@ -48,7 +49,7 @@ func (d *Differ) Poll() ([]Event, error) {
 	}
 	println("fsdiff: creating new snapshot")
 
-	curr, err := NewSnapshot(d.root)
+	curr, err := NewSnapshot(d.root, d.recursive)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting file system snapshot")
 	}
@@ -67,7 +68,7 @@ func (d *Differ) Poll() ([]Event, error) {
 // the Poll method when you try to see all the events that have been tracked.
 func (d *Differ) Update() {
 	// TODO: early return if there has already been an error?
-	curr, err := NewSnapshot(d.root)
+	curr, err := NewSnapshot(d.root, d.recursive)
 	if err != nil {
 		d.err = err
 		return
@@ -121,7 +122,7 @@ func (o Op) String() string {
 type Snapshot map[string]os.FileInfo
 
 // NewSnapshot creates a new snapshot.
-func NewSnapshot(root string) (Snapshot, error) {
+func NewSnapshot(root string, recursive bool) (Snapshot, error) {
 	snap := Snapshot{}
 
 	if err := filepath.Walk(root, snap.Visit); err != nil {
@@ -199,6 +200,13 @@ func Diff(x, y Snapshot) []Event {
 
 // Option defines an option on a differ.
 type Option func(*Differ)
+
+// Recursive causes a Differ to descend into child directories.
+func Recursive() Option {
+	return func(d *Differ) {
+		d.recursive = true
+	}
+}
 
 // Root specifies the root of the file system that a differ tracks.
 func Root(root string) Option {
