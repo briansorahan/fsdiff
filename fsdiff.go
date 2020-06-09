@@ -129,9 +129,10 @@ func diff(x, y snapshot) []Event {
 		for cpath, cinfo := range creates {
 			if os.SameFile(dinfo, cinfo) {
 				events = append(events, Event{
-					Info: cinfo,
-					Op:   Rename,
-					Path: cpath,
+					Info:    cinfo,
+					OldPath: dpath,
+					Op:      Rename,
+					Path:    cpath,
 				})
 				delete(deletes, dpath)
 				delete(creates, cpath)
