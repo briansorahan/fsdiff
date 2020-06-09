@@ -1,4 +1,4 @@
-[![goreportcard](https://goreportcard.com/badge/github.com/briansorahan/fsdiff)][https://goreportcard.com/badge/github.com/briansorahan/fsdiff]
+[![goreportcard](https://goreportcard.com/badge/github.com/briansorahan/fsdiff)]
 
 # fsdiff
 
