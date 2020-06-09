@@ -8,7 +8,7 @@ import (
 	"github.com/briansorahan/fsdiff"
 )
 
-func ExampleDiff() {
+func ExampleDiffer() {
 	// Initialize the differ.
 	// This will read the current state of the file system
 	// at the specified root directory.
