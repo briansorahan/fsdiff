@@ -57,6 +57,7 @@ func (d *Differ) Poll() ([]Event, error) {
 // If this method encounters an error, the error will be returned from
 // the Poll method when you try to see all the events that have been tracked.
 func (d *Differ) Update() {
+	// TODO: early return if there has already been an error?
 	curr, err := newSnapshot(d.root)
 	if err != nil {
 		d.err = err
