@@ -47,14 +47,10 @@ func (d *Differ) Poll() ([]Event, error) {
 	if d.err != nil {
 		return nil, d.err
 	}
-	println("fsdiff: creating new snapshot")
-
 	curr, err := NewSnapshot(d.root, d.recursive)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting file system snapshot")
 	}
-	println("fsdiff: created new snapshot")
-
 	events := append(d.events, Diff(d.latest, curr)...)
 
 	d.events = nil
@@ -141,8 +137,6 @@ func NewSnapshot(root string, recursive bool) (Snapshot, error) {
 			return nil, errors.Wrap(err, "reading files in directory")
 		}
 		for _, info := range infos {
-			println("fsdiff: visited " + info.Name())
-			println("fsdiff: joined with root " + filepath.Join(root, info.Name()))
 			snap[filepath.Join(root, info.Name())] = info
 		}
 	}
@@ -154,8 +148,6 @@ func (s Snapshot) Visit(path string, info os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
-	println("fsdiff: visited " + path)
-
 	s[path] = info
 
 	return nil
