@@ -11,6 +11,8 @@ import (
 
 // Differ diffs a file system at two points in time.
 type Differ struct {
+	err    error // Errors encountered during Update.
+	events []Event
 	latest snapshot
 	root   string
 }
@@ -36,29 +38,46 @@ func New(options ...Option) (*Differ, error) {
 
 // Poll diffs the current state of the file system against the previous state.
 func (d *Differ) Poll() ([]Event, error) {
+	if d.err != nil {
+		return nil, d.err
+	}
 	curr, err := newSnapshot(d.root)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting file system snapshot")
 	}
-	events := diff(d.latest, curr)
+	events := append(d.events, diff(d.latest, curr)...)
 
+	d.events = nil
 	d.latest = curr
 
 	return events, nil
 }
 
-// Event defines an event on a file system.
-type Event struct {
-	Info    os.FileInfo
-	OldPath string // Only populated for a rename event.
-	Op      Op
-	Path    string
+// Update updates the internal slice that tracks file system events.
+// If this method encounters an error, the error will be returned from
+// the Poll method when you try to see all the events that have been tracked.
+func (d *Differ) Update() {
+	curr, err := newSnapshot(d.root)
+	if err != nil {
+		d.err = err
+		return
+	}
+	d.events = append(d.events, diff(d.latest, curr)...)
+	d.latest = curr
 }
 
-// Op defines an operation on a file.
+// Event defines an event on a file system.
+type Event struct {
+	Info    os.FileInfo `json:"-"`
+	OldPath string      `json:"oldpath"` // Only populated for a rename event.
+	Op      Op          `json:"op"`
+	Path    string      `json:"path"`
+}
+
+// Op defines an operation on a file system.
 type Op int
 
-// Operations
+// File system operations.
 const (
 	Create Op = iota
 	Write
@@ -66,6 +85,12 @@ const (
 	Rename
 )
 
+// MarshalJSON returns a JSON representation of the Op.
+func (o Op) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + o.String() + `"`), nil
+}
+
+// String converts the Op to a string.
 func (o Op) String() string {
 	switch o {
 	case Create:

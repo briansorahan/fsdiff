@@ -210,3 +210,42 @@ func TestOpString(t *testing.T) {
 		}
 	}
 }
+
+func TestUpdateError(t *testing.T) {
+	if err := os.Mkdir("testdata/temp", 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// TODO
+	differ, err := fsdiff.New(fsdiff.Root("testdata/temp"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.Create("testdata/temp/foo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close() // Best effort.
+
+	differ.Update()
+
+	if _, err := f.Write([]byte("bar")); err != nil {
+		t.Fatal(err)
+	}
+	differ.Update()
+
+	if err := os.RemoveAll("testdata/temp"); err != nil {
+		t.Fatal(err)
+	}
+	differ.Update()
+
+	events, err := differ.Poll()
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+	if expect, got := "walking file system: lstat testdata/temp: no such file or directory", err.Error(); expect != got {
+		t.Fatalf("expected %s, got %s", expect, got)
+	}
+	if len(events) > 0 {
+		t.Fatalf("expected 0 events, got %d", len(events))
+	}
+}
