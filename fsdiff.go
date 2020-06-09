@@ -135,6 +135,8 @@ func (s Snapshot) Visit(path string, info os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
+	println("fsdiff: visited " + path)
+
 	s[path] = info
 
 	return nil
