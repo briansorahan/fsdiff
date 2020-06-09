@@ -13,7 +13,7 @@ import (
 type Differ struct {
 	err    error // Errors encountered during Update.
 	events []Event
-	latest snapshot
+	latest Snapshot
 	root   string
 }
 
@@ -27,7 +27,7 @@ func New(options ...Option) (*Differ, error) {
 	if len(d.root) == 0 {
 		return nil, errors.New("Root option is required")
 	}
-	snap, err := newSnapshot(d.root)
+	snap, err := NewSnapshot(d.root)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting initial file system snapshot")
 	}
@@ -36,16 +36,21 @@ func New(options ...Option) (*Differ, error) {
 	return d, nil
 }
 
+// Latest returns the latest filesystem snapshot.
+func (d *Differ) Latest() Snapshot {
+	return d.latest
+}
+
 // Poll diffs the current state of the file system against the previous state.
 func (d *Differ) Poll() ([]Event, error) {
 	if d.err != nil {
 		return nil, d.err
 	}
-	curr, err := newSnapshot(d.root)
+	curr, err := NewSnapshot(d.root)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting file system snapshot")
 	}
-	events := append(d.events, diff(d.latest, curr)...)
+	events := append(d.events, Diff(d.latest, curr)...)
 
 	d.events = nil
 	d.latest = curr
@@ -58,12 +63,12 @@ func (d *Differ) Poll() ([]Event, error) {
 // the Poll method when you try to see all the events that have been tracked.
 func (d *Differ) Update() {
 	// TODO: early return if there has already been an error?
-	curr, err := newSnapshot(d.root)
+	curr, err := NewSnapshot(d.root)
 	if err != nil {
 		d.err = err
 		return
 	}
-	d.events = append(d.events, diff(d.latest, curr)...)
+	d.events = append(d.events, Diff(d.latest, curr)...)
 	d.latest = curr
 }
 
@@ -107,18 +112,22 @@ func (o Op) String() string {
 	}
 }
 
-type snapshot map[string]os.FileInfo
+// Snapshot indexes file metadata.
+// Keys are file paths, values are the metadata associated with the file.
+type Snapshot map[string]os.FileInfo
 
-func newSnapshot(root string) (snapshot, error) {
-	snap := snapshot{}
+// NewSnapshot creates a new snapshot.
+func NewSnapshot(root string) (Snapshot, error) {
+	snap := Snapshot{}
 
-	if err := filepath.Walk(root, snap.visit); err != nil {
+	if err := filepath.Walk(root, snap.Visit); err != nil {
 		return nil, errors.Wrap(err, "walking file system")
 	}
 	return snap, nil
 }
 
-func (s snapshot) visit(path string, info os.FileInfo, err error) error {
+// Visit is a WalkFunc useful via the stdlib path/filepath package.
+func (s Snapshot) Visit(path string, info os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
@@ -127,9 +136,9 @@ func (s snapshot) visit(path string, info os.FileInfo, err error) error {
 	return nil
 }
 
-// diff 2 file system snapshots.
+// Diff 2 file system snapshots.
 // x is assumed to be earlier y.
-func diff(x, y snapshot) []Event {
+func Diff(x, y Snapshot) []Event {
 	var (
 		events  []Event
 		creates = map[string]os.FileInfo{}
