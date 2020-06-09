@@ -141,6 +141,8 @@ func NewSnapshot(root string, recursive bool) (Snapshot, error) {
 			return nil, errors.Wrap(err, "reading files in directory")
 		}
 		for _, info := range infos {
+			println("fsdiff: visited " + info.Name())
+			println("fsdiff: joined with root " + filepath.Join(root, info.Name()))
 			snap[info.Name()] = info
 		}
 	}
